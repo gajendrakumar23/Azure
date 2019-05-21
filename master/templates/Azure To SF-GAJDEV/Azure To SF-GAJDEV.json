@@ -1,0 +1,268 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory Name"
+		},
+		"AzureTableStorage1": {
+			"type": "string"
+		},
+		"Salesforce1gk": {
+			"type": "string"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Azure To SF')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Azureto SF",
+						"type": "Copy",
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"typeProperties": {
+							"source": {
+								"type": "AzureTableSource",
+								"azureTableSourceIgnoreTableNotFound": false
+							},
+							"sink": {
+								"type": "SalesforceSink",
+								"writeBatchSize": 5000,
+								"writeBehavior": "insert"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"columnMappings": {
+									"Name": "Name",
+									"AccountNumer": "AccountNumber"
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Output",
+								"type": "DatasetReference",
+								"parameters": {
+									"AccountName": "123",
+									"Phone": 0
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "InputData",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "ToSF",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "setInstanceURL",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"typeProperties": {
+							"url": "https://gajendrakumar23-dev-ed.my.salesforce.com/services/apexrest/VTcaseCreate",
+							"method": "POST",
+							"headers": {
+								"Authorization": {
+									"value": "@concat(string(activity('getAccess').output.token_type),' ',string(activity('getAccess').output.access_token))",
+									"type": "Expression"
+								},
+								"Content-Type": "application/json"
+							},
+							"body": {
+								"caseList": {
+									"contact_Email": "gajendra@mail.com",
+									"contact_Name": "9999898765",
+									"first_Name": "TT",
+									"last_Name": "Test",
+									"priority": "High",
+									"source": "Phone",
+									"status": "New",
+									"account_Name": "Grand Hotels & Resorts Ltd"
+								}
+							}
+						}
+					},
+					{
+						"name": "getAccess",
+						"type": "WebActivity",
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"typeProperties": {
+							"url": "https://login.salesforce.com/services/oauth2/token?grant_type=password&redirect_uri=https://login.salesforce.com/services/oauth2/callback&client_id=3MVG9YDQS5WtC11qZKIvcXyfaVX4AiTr5SrOUi7avu71ixSmfFYT5BW9spyv2AEzhfWZBDucrzigdlbQy4.q7&client_secret=B2FAC734787F3323349155DB3F29E9AFE70DF38D1319A7F4BA191217A7413283&username=gajendra.kumar@gmail.com&password=Mandakini8535TjkHSmA9tzo1Snt28EpvgrZp",
+							"method": "POST",
+							"headers": {
+								"Authorization": "OAuth 2.0"
+							},
+							"linkedServices": [
+								{
+									"referenceName": "HttpServer1",
+									"type": "LinkedServiceReference"
+								}
+							]
+						}
+					},
+					{
+						"name": "accesscode",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "getAccess",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"typeProperties": {
+							"variableName": "AccessCode",
+							"value": {
+								"value": "@activity('getAccess').output.access_token",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "setInstanceURL",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "accesscode",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"typeProperties": {
+							"variableName": "InstanceURL",
+							"value": {
+								"value": "@activity('getAccess').output.instance_url",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"parameters": {
+					"Name": {
+						"type": "string",
+						"defaultValue": "AzureHub"
+					}
+				},
+				"variables": {
+					"AccessCode": {
+						"type": "String"
+					},
+					"InstanceURL": {
+						"type": "String"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Output')]",
+				"[concat(variables('factoryId'), '/datasets/InputData')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Output')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureTableStorage1')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"AccountName": {
+						"type": "string",
+						"defaultValue": "123"
+					},
+					"Phone": {
+						"type": "int",
+						"defaultValue": 0
+					}
+				},
+				"type": "AzureTable",
+				"structure": [
+					{
+						"name": "PartitionKey",
+						"type": "String"
+					},
+					{
+						"name": "RowKey",
+						"type": "String"
+					},
+					{
+						"name": "Timestamp",
+						"type": "DateTimeOffset"
+					},
+					{
+						"name": "Name",
+						"type": "String"
+					},
+					{
+						"name": "AccountNumer",
+						"type": "String"
+					}
+				],
+				"typeProperties": {
+					"tableName": "Account"
+				}
+			}
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/InputData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('Salesforce1gk')]",
+					"type": "LinkedServiceReference"
+				},
+				"type": "SalesforceObject",
+				"structure": [
+					{
+						"name": "Name"
+					},
+					{
+						"name": "AccountNumber"
+					}
+				],
+				"typeProperties": {
+					"objectApiName": "Account"
+				}
+			}
+		}
+	]
+}
