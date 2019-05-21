@@ -1,0 +1,46 @@
+{
+	"name": "Output",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureTableStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"AccountName": {
+				"type": "string",
+				"defaultValue": "123"
+			},
+			"Phone": {
+				"type": "int",
+				"defaultValue": 0
+			}
+		},
+		"type": "AzureTable",
+		"structure": [
+			{
+				"name": "PartitionKey",
+				"type": "String"
+			},
+			{
+				"name": "RowKey",
+				"type": "String"
+			},
+			{
+				"name": "Timestamp",
+				"type": "DateTimeOffset"
+			},
+			{
+				"name": "Name",
+				"type": "String"
+			},
+			{
+				"name": "AccountNumer",
+				"type": "String"
+			}
+		],
+		"typeProperties": {
+			"tableName": "Account"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

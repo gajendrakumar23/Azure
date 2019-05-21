@@ -1,0 +1,21 @@
+{
+	"name": "httpAzToSF",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "HttpServer1",
+			"type": "LinkedServiceReference"
+		},
+		"type": "HttpFile",
+		"typeProperties": {
+			"format": {
+				"type": "JsonFormat"
+			},
+			"requestMethod": "POST",
+			"requestBody": {
+				"value": "\"name\": \"@pipeline().parameters.AccountName\"",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
