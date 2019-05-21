@@ -5,16 +5,6 @@
 			"referenceName": "AzureTableStorage1",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"AccountName": {
-				"type": "string",
-				"defaultValue": "123"
-			},
-			"Phone": {
-				"type": "int",
-				"defaultValue": 0
-			}
-		},
 		"type": "AzureTable",
 		"structure": [
 			{

@@ -34,11 +34,7 @@
 				"inputs": [
 					{
 						"referenceName": "Output",
-						"type": "DatasetReference",
-						"parameters": {
-							"AccountName": "123",
-							"Phone": 0
-						}
+						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
