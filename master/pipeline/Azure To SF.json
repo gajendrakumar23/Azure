@@ -15,6 +15,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureTableSource",
+						"azureTableSourceQuery": "SELECT AccountName from Account",
 						"azureTableSourceIgnoreTableNotFound": false
 					},
 					"sink": {
